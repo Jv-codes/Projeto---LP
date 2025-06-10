@@ -1,2 +1,2 @@
-# Projeto---LP
-Mini projeto da diciplina de Linguagem de Programação
+# Projeto-LP
+Mini projeto da disciplina de Linguagem de Programação
