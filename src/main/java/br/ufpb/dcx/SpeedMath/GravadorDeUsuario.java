@@ -4,57 +4,58 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Gerencia a gravação e leitura de dados de usuários em um arquivo.
+ * Esta versão utiliza a serialização de objetos para persistir a lista de usuários,
+ * tornando o código mais simples e robusto.
+ *
+ * @version 2.0 (Refatorado)
+ */
 public class GravadorDeUsuario {
 
-    private String usuarioos;
+    // O nome do arquivo foi definido como uma constante privada.
+    // A extensão ".dat" é uma convenção para arquivos de dados serializados.
+    private static final String NOME_ARQUIVO = "usuarios.dat";
 
-    public GravadorDeUsuario (String nomeUsuario){
-        this.usuarioos = nomeUsuario;
+    /**
+     * Construtor padrão.
+     */
+    public GravadorDeUsuario() {
     }
 
-    public GravadorDeUsuario(){
-        this("usuarios.txt");
-
-    }
+    /**
+     * Grava uma lista de objetos Usuario no arquivo.
+     * A lista inteira é salva de uma só vez usando ObjectOutputStream.
+     * <p>
+     * <b>IMPORTANTE:</b> A classe 'Usuario' DEVE implementar a interface {@link java.io.Serializable}
+     * para que este método funcione. Ex: {@code public class Usuario implements Serializable { ... }}
+     *
+     * @param usuarios A lista de usuários a ser gravada.
+     * @throws IOException Se ocorrer um erro de I/O durante a gravação.
+     */
     public void gravarUsuarios(List<Usuario> usuarios) throws IOException {
-        BufferedWriter escritor = null;
-        try {
-            escritor = new BufferedWriter(new FileWriter(this.usuarioos));
-            for (Usuario u: usuarios){
-                escritor.write(u.getNomeUsuario()+"___"+ u.getScore()+ "___" + u.getSenha()+ "\n");
-            }
-        }finally {
-            if (escritor != null) {
-                escritor.close();
-            }
+        try (ObjectOutputStream gravador = new ObjectOutputStream(new FileOutputStream(NOME_ARQUIVO))) {
+            gravador.writeObject(usuarios);
         }
-
     }
 
+    /**
+     * Carrega a lista de usuários a partir do arquivo.
+     * Lê o objeto da lista inteiro do arquivo usando ObjectInputStream.
+     *
+     * @return Uma {@link List<Usuario>} com os dados recuperados do arquivo.
+     * Retorna uma lista vazia se o arquivo não for encontrado (primeira execução).
+     * @throws IOException Se ocorrer um erro de I/O (que não seja arquivo não encontrado) ou
+     * se a classe do objeto lido não for compatível.
+     */
+    @SuppressWarnings("unchecked") // Necessário para o cast para List<Usuario>
     public List<Usuario> carregarUsuarios() throws IOException {
-        List<Usuario> usuarios = new ArrayList<>();
-        BufferedReader leitor = null;
-        try {
-            leitor = new BufferedReader(new FileReader(this.usuarioos));
-            String linha;
-
-            while ((linha = leitor.readLine()) != null) {
-                String[] partes = linha.split("___");
-                if (partes.length == 3) {
-                    String nome = partes[0];
-                    int score = Integer.parseInt(partes[1]);
-                    String senha = partes[2];
-                    Usuario u = new Usuario(nome, senha);
-                    u.setScore(score);
-                    usuarios.add(u);
-                }
-            }
-        } finally {
-            if (leitor != null) {
-                leitor.close();
-            }
+        try (ObjectInputStream leitor = new ObjectInputStream(new FileInputStream(NOME_ARQUIVO))) {
+            return (List<Usuario>) leitor.readObject();
+        } catch (FileNotFoundException e) {
+            return new ArrayList<>();
+        } catch (ClassNotFoundException e) {
+            throw new IOException("Erro de compatibilidade: A definição da classe Usuario pode ter mudado.", e);
         }
-
-        return usuarios;
     }
 }
